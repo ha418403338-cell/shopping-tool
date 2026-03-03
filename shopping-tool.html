@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>购物精算师</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --surface: #1a1915;
+    --surface2: #242320;
+    --accent: #e8c84a;
+    --accent2: #c4a832;
+    --text: #f0ead8;
+    --text2: #9a9280;
+    --border: #2e2c27;
+    --red: #e05a4a;
+    --green: #5ab88a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif SC', serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    padding: 32px 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #1a1810 0%, var(--bg) 100%);
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--accent);
+  }
+
+  header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 16px;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .panel { display: none; padding: 20px; }
+  .panel.active { display: block; }
+
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text2);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .card-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text2);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  input, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 8px 10px;
+    width: 100%;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+
+  .input-group { flex: 1; min-width: 80px; }
+
+  .btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .btn:hover { border-color: var(--accent2); color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0f0e0c;
+    font-weight: 600;
+    padding: 14px 20px;
+    width: 100%;
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); color: #0f0e0c; }
+
+  .btn-add {
+    border-style: dashed;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  .btn-remove {
+    border-color: transparent;
+    color: var(--text2);
+    padding: 6px 10px;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .btn-remove:hover { color: var(--red); border-color: var(--red); }
+
+  /* Results */
+  .result-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .result-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .result-item:last-child { border-bottom: none; }
+
+  .result-name {
+    font-size: 14px;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .result-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text2);
+    text-align: right;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .badge-best { background: rgba(232,200,74,0.15); color: var(--accent); border: 1px solid rgba(232,200,74,0.3); }
+  .badge-ok { background: rgba(154,146,128,0.1); color: var(--text2); border: 1px solid var(--border); }
+
+  .result-summary {
+    padding: 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .summary-row .val {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+  }
+
+  .highlight-box {
+    border: 1px solid rgba(232,200,74,0.3);
+    background: rgba(232,200,74,0.05);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+
+  .highlight-box .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+
+  .highlight-box .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .coupon-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 8px;
+  }
+
+  .coupon-row .input-group { flex: 1; }
+
+  .error-msg {
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  /* Coupon tags */
+  .coupon-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .coupon-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .coupon-tag .remove-tag {
+    cursor: pointer;
+    color: var(--text2);
+    transition: color 0.2s;
+  }
+  .coupon-tag .remove-tag:hover { color: var(--red); }
+
+  .combo-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .combo-item:last-child { border-bottom: none; }
+
+  .combo-title {
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .combo-detail {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.8;
+  }
+
+  .best-combo {
+    background: rgba(232,200,74,0.05);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .info-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.8;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>购物精算师</h1>
+  <p>PRICE CALCULATOR · ORDER OPTIMIZER</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('compare')">比单价</button>
+  <button class="tab" onclick="switchTab('bundle')">凑单</button>
+</div>
+
+<!-- 比单价 -->
+<div id="panel-compare" class="panel active">
+  <p class="section-title">商品列表</p>
+
+  <div id="compare-items"></div>
+
+  <button class="btn btn-add" onclick="addCompareItem()">＋ 添加商品</button>
+
+  <button class="btn btn-primary" onclick="calcCompare()">计算最低单价</button>
+
+  <div id="compare-result"></div>
+</div>
+
+<!-- 凑单 -->
+<div id="panel-bundle" class="panel">
+  <p class="section-title">优惠券规则</p>
+
+  <div class="info-text">
+    支持多张券叠加。每张券填写"满X减Y"，工具会找最优购买组合。
+  </div>
+
+  <div id="coupon-inputs">
+    <div class="coupon-row">
+      <div class="input-group">
+        <label>满（元）</label>
+        <input type="number" id="coupon-threshold-0" placeholder="满100" min="0">
+      </div>
+      <div class="input-group">
+        <label>减（元）</label>
+        <input type="number" id="coupon-discount-0" placeholder="减20" min="0">
+      </div>
+      <button class="btn" onclick="addCoupon()" style="align-self: flex-end; padding: 9px 14px;">＋</button>
+    </div>
+  </div>
+
+  <div id="coupon-tags" class="coupon-tags"></div>
+
+  <div class="divider"></div>
+
+  <p class="section-title">购物车商品</p>
+
+  <div id="bundle-items"></div>
+
+  <button class="btn btn-add" onclick="addBundleItem()">＋ 添加商品</button>
+
+  <button class="btn btn-primary" onclick="calcBundle()">计算最优凑单方案</button>
+
+  <div id="bundle-result"></div>
+</div>
+
+<script>
+// ========== STATE ==========
+let compareCount = 0;
+let bundleCount = 0;
+let coupons = []; // {threshold, discount}
+let couponInputCount = 0;
+
+const UNITS = ['g', 'kg', 'ml', 'L', '个', '片', '包', '瓶', '袋'];
+
+// ========== TAB ==========
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'compare') || (i === 1 && tab === 'bundle'));
+  });
+  document.getElementById('panel-compare').classList.toggle('active', tab === 'compare');
+  document.getElementById('panel-bundle').classList.toggle('active', tab === 'bundle');
+}
+
+// ========== COMPARE ==========
+function addCompareItem(name = '', price = '', qty = '', unit = 'g') {
+  const id = compareCount++;
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = `ci-${id}`;
+  div.innerHTML = `
+    <div class="card-row">
+      <div class="input-group" style="flex:2">
+        <label>商品名称</label>
+        <input type="text" placeholder="如：燕麦片A款" value="${name}" id="ci-name-${id}">
+      </div>
+      <button class="btn btn-remove" onclick="removeItem('ci-${id}')">✕</button>
+    </div>
+    <div class="card-row">
+      <div class="input-group">
+        <label>价格（元）</label>
+        <input type="number" placeholder="29.9" min="0" value="${price}" id="ci-price-${id}">
+      </div>
+      <div class="input-group">
+        <label>数量</label>
+        <input type="number" placeholder="500" min="0" value="${qty}" id="ci-qty-${id}">
+      </div>
+      <div class="input-group" style="min-width:70px; max-width:80px">
+        <label>单位</label>
+        <select id="ci-unit-${id}">
+          ${UNITS.map(u => `<option value="${u}" ${u===unit?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+  document.getElementById('compare-items').appendChild(div);
+}
+
+function removeItem(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function calcCompare() {
+  const cards = document.querySelectorAll('#compare-items .card');
+  const items = [];
+
+  for (const card of cards) {
+    const id = card.id.replace('ci-', '');
+    const name = document.getElementById(`ci-name-${id}`).value || `商品${id}`;
+    const price = parseFloat(document.getElementById(`ci-price-${id}`).value);
+    const qty = parseFloat(document.getElementById(`ci-qty-${id}`).value);
+    const unit = document.getElementById(`ci-unit-${id}`).value;
+
+    if (isNaN(price) || isNaN(qty) || qty <= 0 || price <= 0) continue;
+
+    const unitPrice = price / qty;
+    items.push({ name, price, qty, unit, unitPrice });
+  }
+
+  const container = document.getElementById('compare-result');
+
+  if (items.length < 2) {
+    container.innerHTML = `<p class="error-msg">请至少添加 2 个有效商品</p>`;
+    return;
+  }
+
+  // Check unit consistency
+  const firstUnit = items[0].unit;
+  const weightUnits = ['g', 'kg'];
+  const volUnits = ['ml', 'L'];
+  const countUnits = ['个', '片', '包', '瓶', '袋'];
+
+  const normalize = (qty, unit) => {
+    if (unit === 'kg') return qty * 1000;
+    if (unit === 'L') return qty * 1000;
+    return qty;
+  };
+  const normalizeUnit = (unit) => {
+    if (unit === 'kg') return 'g';
+    if (unit === 'L') return 'ml';
+    return unit;
+  };
+
+  const normalizedItems = items.map(item => ({
+    ...item,
+    normQty: normalize(item.qty, item.unit),
+    normUnit: normalizeUnit(item.unit),
+  }));
+
+  // Check if all units are comparable
+  const normUnits = [...new Set(normalizedItems.map(i => i.normUnit))];
+  let comparable = normUnits.length === 1;
+
+  normalizedItems.forEach(item => {
+    item.unitPrice = comparable ? item.price / item.normQty : item.price / item.qty;
+    item.displayUnit = comparable ? item.normUnit : item.unit;
+  });
+
+  normalizedItems.sort((a, b) => a.unitPrice - b.unitPrice);
+
+  const best = normalizedItems[0];
+
+  let html = `<div class="result-block">
+    <div class="result-header">比价结果 — 按单价从低到高</div>`;
+
+  normalizedItems.forEach((item, i) => {
+    const isBest = i === 0;
+    const diff = ((item.unitPrice - best.unitPrice) / best.unitPrice * 100).toFixed(1);
+    html += `
+    <div class="result-item">
+      <div>
+        <div class="result-name">${item.name}</div>
+        <div class="result-price">¥${item.price} / ${item.qty}${item.unit}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="result-price" style="font-size:15px;color:${isBest?'var(--accent)':'var(--text)'}">
+          ¥${item.unitPrice.toFixed(4)} <span style="font-size:11px;color:var(--text2)">/${item.displayUnit}</span>
+        </div>
+        ${isBest
+          ? `<div style="margin-top:4px"><span class="badge badge-best">最划算</span></div>`
+          : `<div style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red)">贵 ${diff}%</div>`
+        }
+      </div>
+    </div>`;
+  });
+
+  if (!comparable) {
+    html += `<div style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)">
+      ⚠ 商品单位不统一，按各自单位计算，仅供参考
+    </div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// ========== BUNDLE ==========
+function addCoupon() {
+  const idx = couponInputCount;
+  const threshold = parseFloat(document.getElementById(`coupon-threshold-${idx}`).value);
+  const discount = parseFloat(document.getElementById(`coupon-discount-${idx}`).value);
+
+  if (isNaN(threshold) || isNaN(discount) || threshold <= 0 || discount <= 0) {
+    alert('请填写完整的满减金额');
+    return;
+  }
+  if (discount >= threshold) {
+    alert('优惠金额不能大于或等于满减门槛');
+    return;
+  }
+
+  coupons.push({ threshold, discount });
+  renderCouponTags();
+
+  couponInputCount++;
+  const container = document.getElementById('coupon-inputs');
+  const row = document.createElement('div');
+  row.className = 'coupon-row';
+  row.innerHTML = `
+    <div class="input-group">
+      <label>满（元）</label>
+      <input type="number" id="coupon-threshold-${couponInputCount}" placeholder="满100" min="0">
+    </div>
+    <div class="input-group">
+      <label>减（元）</label>
+      <input type="number" id="coupon-discount-${couponInputCount}" placeholder="减20" min="0">
+    </div>
+    <button class="btn" onclick="addCoupon()" style="align-self: flex-end; padding: 9px 14px;">＋</button>
+  `;
+  // Replace last row's button action
+  container.lastElementChild.querySelector('button').onclick = null;
+  container.lastElementChild.querySelector('button').style.display = 'none';
+  container.appendChild(row);
+}
+
+function removeCoupon(i) {
+  coupons.splice(i, 1);
+  renderCouponTags();
+}
+
+function renderCouponTags() {
+  const container = document.getElementById('coupon-tags');
+  container.innerHTML = coupons.map((c, i) =>
+    `<div class="coupon-tag">满${c.threshold}减${c.discount} <span class="remove-tag" onclick="removeCoupon(${i})">✕</span></div>`
+  ).join('');
+}
+
+function addBundleItem(name = '', price = '') {
+  const id = bundleCount++;
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.id = `bi-${id}`;
+  div.innerHTML = `
+    <div class="card-row">
+      <div class="input-group" style="flex:2">
+        <label>商品名称</label>
+        <input type="text" placeholder="如：洗发水" value="${name}" id="bi-name-${id}">
+      </div>
+      <div class="input-group">
+        <label>价格（元）</label>
+        <input type="number" placeholder="39.9" min="0" step="0.01" value="${price}" id="bi-price-${id}">
+      </div>
+      <button class="btn btn-remove" onclick="removeItem('bi-${id}')">✕</button>
+    </div>
+  `;
+  document.getElementById('bundle-items').appendChild(div);
+}
+
+function calcBundle() {
+  // Get current coupons (including the one in input if filled)
+  const allCoupons = [...coupons];
+  const lastIdx = couponInputCount;
+  const lastT = parseFloat(document.getElementById(`coupon-threshold-${lastIdx}`)?.value);
+  const lastD = parseFloat(document.getElementById(`coupon-discount-${lastIdx}`)?.value);
+  if (!isNaN(lastT) && !isNaN(lastD) && lastT > 0 && lastD > 0 && lastD < lastT) {
+    allCoupons.push({ threshold: lastT, discount: lastD });
+  }
+
+  const cards = document.querySelectorAll('#bundle-items .card');
+  const items = [];
+  for (const card of cards) {
+    const id = card.id.replace('bi-', '');
+    const name = document.getElementById(`bi-name-${id}`).value || `商品${id}`;
+    const price = parseFloat(document.getElementById(`bi-price-${id}`).value);
+    if (isNaN(price) || price <= 0) continue;
+    items.push({ name, price });
+  }
+
+  const container = document.getElementById('bundle-result');
+
+  if (items.length === 0) {
+    container.innerHTML = `<p class="error-msg">请至少添加 1 个商品</p>`;
+    return;
+  }
+  if (allCoupons.length === 0) {
+    container.innerHTML = `<p class="error-msg">请至少添加 1 张优惠券</p>`;
+    return;
+  }
+
+  const totalItems = items.reduce((s, i) => s + i.price, 0);
+
+  // For each coupon, find minimum spend to activate it
+  // Strategy: find which items to buy to hit threshold with minimum waste
+  // We'll try all subsets (up to 20 items, use greedy for more)
+
+  const results = [];
+
+  // For each coupon independently
+  for (const coupon of allCoupons) {
+    const { threshold, discount } = coupon;
+
+    // Already meets threshold with all items?
+    if (totalItems >= threshold) {
+      // Can we remove some items and still meet threshold?
+      const best = findMinSpend(items, threshold);
+      const actual = best.total;
+      const paid = actual - discount;
+      results.push({
+        coupon,
+        selectedItems: best.items,
+        gross: actual,
+        discount,
+        paid,
+        savings: discount,
+        strategy: '购买部分商品即可凑满'
+      });
+    } else {
+      // Need to add more — but we don't have more items, so buy all + note gap
+      const gap = threshold - totalItems;
+      results.push({
+        coupon,
+        selectedItems: items,
+        gross: totalItems,
+        discount: 0,
+        paid: totalItems,
+        savings: 0,
+        gap,
+        strategy: '当前购物车不足以凑满，还差 ¥' + gap.toFixed(2)
+      });
+    }
+  }
+
+  // Also try combining all coupons
+  if (allCoupons.length > 1) {
+    // Find minimum spend to hit highest threshold
+    const maxThreshold = Math.max(...allCoupons.map(c => c.threshold));
+    const totalDiscount = allCoupons.reduce((s, c) => s + c.discount, 0);
+    if (totalItems >= maxThreshold) {
+      const best = findMinSpend(items, maxThreshold);
+      results.push({
+        coupon: { threshold: maxThreshold, discount: totalDiscount, combined: true },
+        selectedItems: best.items,
+        gross: best.total,
+        discount: totalDiscount,
+        paid: best.total - totalDiscount,
+        savings: totalDiscount,
+        strategy: '叠加所有优惠券'
+      });
+    }
+  }
+
+  // Sort by paid (ascending)
+  results.sort((a, b) => (a.paid || 99999) - (b.paid || 99999));
+
+  let html = `<div class="result-block"><div class="result-header">凑单方案</div>`;
+
+  results.forEach((r, i) => {
+    const isBest = i === 0 && r.savings > 0;
+    html += `<div class="combo-item ${isBest ? 'best-combo' : ''}">
+      <div class="combo-title">
+        ${r.coupon.combined ? '🔥 叠加券' : `满${r.coupon.threshold}减${r.coupon.discount}`}
+        ${isBest ? ' — 最优方案' : ''}
+      </div>
+      <div class="combo-detail">`;
+
+    if (r.gap) {
+      html += `⚠ 购物车总价 ¥${totalItems.toFixed(2)}，还差 ¥${r.gap.toFixed(2)} 才能凑满<br>`;
+      html += `建议再加购约 ¥${r.gap.toFixed(2)} 的商品`;
+    } else {
+      html += `购买：${r.selectedItems.map(i => `${i.name}(¥${i.price})`).join('、')}<br>`;
+      html += `商品合计：¥${r.gross.toFixed(2)}<br>`;
+      html += `优惠：-¥${r.discount.toFixed(2)}<br>`;
+      html += `<strong style="color:var(--accent)">实付：¥${r.paid.toFixed(2)}</strong>`;
+      if (r.gross > r.coupon.threshold) {
+        html += `　（超出门槛 ¥${(r.gross - r.coupon.threshold).toFixed(2)}，可考虑减少商品）`;
+      }
+    }
+
+    html += `</div></div>`;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// Find minimum subset of items that totals >= threshold
+function findMinSpend(items, threshold) {
+  // Sort by price descending, greedily try to hit threshold
+  // Use DP for exact minimum if items <= 20
+  if (items.length <= 20) {
+    return dpMinSpend(items, threshold);
+  }
+  // Greedy fallback
+  const sorted = [...items].sort((a, b) => b.price - a.price);
+  let total = 0;
+  const selected = [];
+  for (const item of sorted) {
+    if (total >= threshold) break;
+    selected.push(item);
+    total += item.price;
+  }
+  return { items: selected, total };
+}
+
+function dpMinSpend(items, threshold) {
+  const n = items.length;
+  // Try all 2^n subsets, find minimum total >= threshold
+  let bestTotal = Infinity;
+  let bestMask = 0;
+
+  for (let mask = 1; mask < (1 << n); mask++) {
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) total += items[i].price;
+    }
+    if (total >= threshold && total < bestTotal) {
+      bestTotal = total;
+      bestMask = mask;
+    }
+  }
+
+  if (bestTotal === Infinity) {
+    // Can't reach threshold
+    return { items: [...items], total: items.reduce((s, i) => s + i.price, 0) };
+  }
+
+  const selected = [];
+  for (let i = 0; i < n; i++) {
+    if (bestMask & (1 << i)) selected.push(items[i]);
+  }
+  return { items: selected, total: bestTotal };
+}
+
+// ========== INIT ==========
+addCompareItem('商品A', '', '', 'g');
+addCompareItem('商品B', '', '', 'g');
+addBundleItem();
+addBundleItem();
+</script>
+</body>
+</html>
